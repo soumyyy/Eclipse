@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>Main Interface</title>
+</head>
+<body>
+    <div class="container">
+        <button class="controlBtn" id="listenButton" onclick="toggleListening()">Start Listening</button>
+        <div class="content">
+            <div class="pulsatingBlob" id="outputBlob"></div>
+            <div id="transcriptionDisplay"></div>
+            <audio id="audioPlayer" controls hidden></audio>
+        </div>
+    </div>
+    <div class="footer">eclipse.</div>
+
+    <script>
+        let isListening = false;
+
+        function toggleListening() {
+            const listenButton = document.getElementById('listenButton');
+            if (isListening) {
+                stopListening();
+                listenButton.textContent = 'Start Listening';
+            } else {
+                startListening();
+                listenButton.textContent = 'Stop Listening';
+            }
+            isListening = !isListening;
+        }
+
+        function startListening() {
+            console.log("Listening started...");
+            fetch('/toggleListening', { method: 'POST' });
+        }
+
+        function stopListening() {
+            console.log("Listening stopped.");
+            fetch('/toggleListening', { method: 'POST' });
+        }
+
+        function updateTranscriptionUI(transcription) {
+            const transcriptionDisplay = document.getElementById('transcriptionDisplay');
+            const newTranscript = document.createElement('p');
+            newTranscript.textContent = transcription;
+            transcriptionDisplay.appendChild(newTranscript);
+
+            toggleBlobAnimation(true);
+            setTimeout(() => toggleBlobAnimation(false), 3000);  // Simulate animation duration
+        }
+
+        function toggleBlobAnimation(isSpeaking) {
+            const blob = document.getElementById('outputBlob');
+            if (isSpeaking) {
+                blob.classList.add('pulsatingBlob');
+            } else {
+                blob.classList.remove('pulsatingBlob');
+            }
+        }
+
+        // Fetch new transcriptions periodically
+        setInterval(() => {
+            fetch('/getTranscriptions')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        const lastTranscript = data[data.length - 1].transcript;
+                        updateTranscriptionUI(lastTranscript);
+                    }
+                });
+        }, 5000);  // Adjust interval as needed
+    </script>
+</body>
+</html>
